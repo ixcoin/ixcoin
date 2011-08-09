@@ -61,7 +61,7 @@ void PrintConsole(const char* format, ...)
     }
     printf("%s", buffer);
 #if defined(__WXMSW__) && defined(GUI)
-    MyMessageBox(buffer, "Bitcoin", wxOK | wxICON_EXCLAMATION);
+    MyMessageBox(buffer, "Ixcoin", wxOK | wxICON_EXCLAMATION);
 #else
     fprintf(stdout, "%s", buffer);
 #endif
@@ -160,13 +160,123 @@ Value stop(const Array& params, bool fHelp)
     if (fHelp || params.size() != 0)
         throw runtime_error(
             "stop\n"
-            "Stop bitcoin server.");
+            "Stop ixcoin server.");
 
     // Shutdown will take long enough that the response should get back
     CreateThread(Shutdown, NULL);
-    return "bitcoin server stopping";
+    return "ixcoin server stopping";
 }
 
+Value getblock(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+           "getblock height\n"
+           "Dumps the block existing at specified height");
+
+    int64 height = params[0].get_int64();
+    if (height > nBestHeight)
+        throw runtime_error(
+            "getblock height\n"
+            "Dumps the block existing at specified height");
+
+    string blkname = strprintf("blk%d", height);
+
+    CBlockIndex* pindex;
+    bool found = false;
+
+    for (map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.begin();
+         mi != mapBlockIndex.end(); ++mi)
+    {
+    	pindex = (*mi).second;
+	if (pindex->nHeight == height) {
+		found = true;
+		break;
+	}
+    }
+
+    if (!found)
+        throw runtime_error(
+            "getblock height\n"
+            "Dumps the block existing at specified height");
+
+    CBlock block;
+    block.ReadFromDisk(pindex);
+    block.BuildMerkleTree();
+
+    Object obj;
+    obj.push_back(Pair("hash", block.GetHash().ToString().c_str()));
+    obj.push_back(Pair("ver", block.nVersion));
+    obj.push_back(Pair("prev_block", block.hashPrevBlock.ToString().c_str()));
+    obj.push_back(Pair("mrkl_root", block.hashMerkleRoot.ToString().c_str()));
+    obj.push_back(Pair("time", (uint64_t)block.nTime));
+    obj.push_back(Pair("bits", (uint64_t)block.nBits));
+    obj.push_back(Pair("nonce", (uint64_t)block.nNonce));
+    obj.push_back(Pair("n_tx", (int)block.vtx.size()));
+
+    Array tx;
+    for (int i = 0; i < block.vtx.size(); i++) {
+    	Object txobj;
+
+	txobj.push_back(Pair("hash", block.vtx[i].GetHash().ToString().c_str()));
+	txobj.push_back(Pair("ver", block.vtx[i].nVersion));
+	txobj.push_back(Pair("vin_sz", (int)block.vtx[i].vin.size()));
+	txobj.push_back(Pair("vout_sz", (int)block.vtx[i].vout.size()));
+	txobj.push_back(Pair("lock_time", (uint64_t)block.vtx[i].nLockTime));
+
+	Array tx_vin;
+	for (int j = 0; j < block.vtx[i].vin.size(); j++) {
+	    Object vino;
+
+	    Object vino_outpt;
+
+	    vino_outpt.push_back(Pair("hash",
+	    	block.vtx[i].vin[j].prevout.hash.ToString().c_str()));
+	    vino_outpt.push_back(Pair("n", (uint64_t)block.vtx[i].vin[j].prevout.n));
+
+	    vino.push_back(Pair("prev_out", vino_outpt));
+
+	    if (block.vtx[i].vin[j].prevout.IsNull())
+	    	vino.push_back(Pair("coinbase", HexStr(
+			block.vtx[i].vin[j].scriptSig.begin(),
+			block.vtx[i].vin[j].scriptSig.end(), false).c_str()));
+	    else
+	    	vino.push_back(Pair("scriptSig", 
+			block.vtx[i].vin[j].scriptSig.ToString().c_str()));
+	    if (block.vtx[i].vin[j].nSequence != UINT_MAX)
+	    	vino.push_back(Pair("sequence", (uint64_t)block.vtx[i].vin[j].nSequence));
+
+	    tx_vin.push_back(vino);
+	}
+
+	Array tx_vout;
+	for (int j = 0; j < block.vtx[i].vout.size(); j++) {
+	    Object vouto;
+
+	    vouto.push_back(Pair("value",
+	    	(double)block.vtx[i].vout[j].nValue / (double)COIN));
+	    vouto.push_back(Pair("scriptPubKey", 
+		block.vtx[i].vout[j].scriptPubKey.ToString().c_str()));
+
+	    tx_vout.push_back(vouto);
+	}
+
+	txobj.push_back(Pair("in", tx_vin));
+	txobj.push_back(Pair("out", tx_vout));
+
+	tx.push_back(txobj);
+    }
+
+    obj.push_back(Pair("tx", tx));
+
+    Array mrkl;
+    for (int i = 0; i < block.vMerkleTree.size(); i++)
+    	mrkl.push_back(block.vMerkleTree[i].ToString().c_str());
+
+    obj.push_back(Pair("mrkl_tree", mrkl));
+
+    return obj;
+}
 
 Value getblockcount(const Array& params, bool fHelp)
 {
@@ -320,7 +430,7 @@ Value getnewaddress(const Array& params, bool fHelp)
     if (fHelp || params.size() > 1)
         throw runtime_error(
             "getnewaddress [account]\n"
-            "Returns a new bitcoin address for receiving payments.  "
+            "Returns a new ixcoin address for receiving payments.  "
             "If [account] is specified (recommended), it is added to the address book "
             "so payments received with the address will be credited to [account].");
 
@@ -387,7 +497,7 @@ Value getaccountaddress(const Array& params, bool fHelp)
     if (fHelp || params.size() != 1)
         throw runtime_error(
             "getaccountaddress <account>\n"
-            "Returns the current bitcoin address for receiving payments to this account.");
+            "Returns the current ixcoin address for receiving payments to this account.");
 
     // Parse the account first so we don't generate a key if there's an error
     string strAccount = AccountFromValue(params[0]);
@@ -410,14 +520,14 @@ Value setaccount(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
-            "setaccount <bitcoinaddress> <account>\n"
+            "setaccount <ixcoinaddress> <account>\n"
             "Sets the account associated with the given address.");
 
     string strAddress = params[0].get_str();
     uint160 hash160;
     bool isValid = AddressToHash160(strAddress, hash160);
     if (!isValid)
-        throw JSONRPCError(-5, "Invalid bitcoin address");
+        throw JSONRPCError(-5, "Invalid ixcoin address");
 
 
     string strAccount;
@@ -447,7 +557,7 @@ Value getaccount(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
-            "getaccount <bitcoinaddress>\n"
+            "getaccount <ixcoinaddress>\n"
             "Returns the account associated with the given address.");
 
     string strAddress = params[0].get_str();
@@ -482,7 +592,7 @@ Value getaddressesbyaccount(const Array& params, bool fHelp)
             const string& strName = item.second;
             if (strName == strAccount)
             {
-                // We're only adding valid bitcoin addresses and not ip addresses
+                // We're only adding valid ixcoin addresses and not ip addresses
                 CScript scriptPubKey;
                 if (scriptPubKey.SetBitcoinAddress(strAddress))
                     ret.push_back(strAddress);
@@ -512,7 +622,7 @@ Value sendtoaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 2 || params.size() > 4)
         throw runtime_error(
-            "sendtoaddress <bitcoinaddress> <amount> [comment] [comment-to]\n"
+            "sendtoaddress <ixcoinaddress> <amount> [comment] [comment-to]\n"
             "<amount> is a real and is rounded to the nearest 0.00000001");
 
     string strAddress = params[0].get_str();
@@ -542,14 +652,14 @@ Value getreceivedbyaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
-            "getreceivedbyaddress <bitcoinaddress> [minconf=1]\n"
-            "Returns the total amount received by <bitcoinaddress> in transactions with at least [minconf] confirmations.");
+            "getreceivedbyaddress <ixcoinaddress> [minconf=1]\n"
+            "Returns the total amount received by <ixcoinaddress> in transactions with at least [minconf] confirmations.");
 
     // Bitcoin address
     string strAddress = params[0].get_str();
     CScript scriptPubKey;
     if (!scriptPubKey.SetBitcoinAddress(strAddress))
-        throw JSONRPCError(-5, "Invalid bitcoin address");
+        throw JSONRPCError(-5, "Invalid ixcoin address");
     if (!IsMine(*pwalletMain,scriptPubKey))
         return (double)0.0;
 
@@ -775,7 +885,7 @@ Value sendfrom(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 3 || params.size() > 6)
         throw runtime_error(
-            "sendfrom <fromaccount> <tobitcoinaddress> <amount> [minconf=1] [comment] [comment-to]\n"
+            "sendfrom <fromaccount> <toixcoinaddress> <amount> [minconf=1] [comment] [comment-to]\n"
             "<amount> is a real and is rounded to the nearest 0.00000001");
 
     string strAccount = AccountFromValue(params[0]);
@@ -842,7 +952,7 @@ Value sendmany(const Array& params, bool fHelp)
 
         CScript scriptPubKey;
         if (!scriptPubKey.SetBitcoinAddress(strAddress))
-            throw JSONRPCError(-5, string("Invalid bitcoin address:")+strAddress);
+            throw JSONRPCError(-5, string("Invalid ixcoin address:")+strAddress);
         int64 nAmount = AmountFromValue(s.value_); 
         totalAmount += nAmount;
 
@@ -1285,8 +1395,8 @@ Value validateaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
-            "validateaddress <bitcoinaddress>\n"
-            "Return information about <bitcoinaddress>.");
+            "validateaddress <ixcoinaddress>\n"
+            "Return information about <ixcoinaddress>.");
 
     string strAddress = params[0].get_str();
     uint160 hash160;
@@ -1324,10 +1434,10 @@ Value getwork(const Array& params, bool fHelp)
             "If [data] is specified, tries to solve the block and returns true if it was successful.");
 
     if (vNodes.empty())
-        throw JSONRPCError(-9, "Bitcoin is not connected!");
+        throw JSONRPCError(-9, "Ixcoin is not connected!");
 
     if (IsInitialBlockDownload())
-        throw JSONRPCError(-10, "Bitcoin is downloading blocks...");
+        throw JSONRPCError(-10, "Ixcoin is downloading blocks...");
 
     static map<uint256, pair<CBlock*, unsigned int> > mapNewBlock;
     static vector<CBlock*> vNewBlock;
@@ -1434,6 +1544,7 @@ pair<string, rpcfn_type> pCallTable[] =
 {
     make_pair("help",                  &help),
     make_pair("stop",                  &stop),
+	make_pair("getblock",		       &getblock),
     make_pair("getblockcount",         &getblockcount),
     make_pair("getblocknumber",        &getblocknumber),
     make_pair("getconnectioncount",    &getconnectioncount),
@@ -1512,7 +1623,7 @@ string HTTPPost(const string& strMsg, const map<string,string>& mapRequestHeader
 {
     ostringstream s;
     s << "POST / HTTP/1.1\r\n"
-      << "User-Agent: bitcoin-json-rpc/" << FormatFullVersion() << "\r\n"
+      << "User-Agent: ixcoin-json-rpc/" << FormatFullVersion() << "\r\n" 
       << "Host: 127.0.0.1\r\n"
       << "Content-Type: application/json\r\n"
       << "Content-Length: " << strMsg.size() << "\r\n"
@@ -1542,7 +1653,7 @@ static string HTTPReply(int nStatus, const string& strMsg)
     if (nStatus == 401)
         return strprintf("HTTP/1.0 401 Authorization Required\r\n"
             "Date: %s\r\n"
-            "Server: bitcoin-json-rpc/%s\r\n"
+            "Server: ixcoin-json-rpc/%s\r\n"
             "WWW-Authenticate: Basic realm=\"jsonrpc\"\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 296\r\n"
@@ -1568,7 +1679,7 @@ static string HTTPReply(int nStatus, const string& strMsg)
             "Connection: close\r\n"
             "Content-Length: %d\r\n"
             "Content-Type: application/json\r\n"
-            "Server: bitcoin-json-rpc/%s\r\n"
+            "Server: ixcoin-json-rpc/%s\r\n"
             "\r\n"
             "%s",
         nStatus,
@@ -1823,7 +1934,7 @@ void ThreadRPCServer2(void* parg)
 
     if (mapArgs["-rpcuser"] == "" && mapArgs["-rpcpassword"] == "")
     {
-        string strWhatAmI = "To use bitcoind";
+        string strWhatAmI = "To use ixcoind";
         if (mapArgs.count("-server"))
             strWhatAmI = strprintf(_("To use the %s option"), "\"-server\"");
         else if (mapArgs.count("-daemon"))
@@ -1841,7 +1952,7 @@ void ThreadRPCServer2(void* parg)
     asio::ip::address bindAddress = mapArgs.count("-rpcallowip") ? asio::ip::address_v4::any() : asio::ip::address_v4::loopback();
 
     asio::io_service io_service;
-    ip::tcp::endpoint endpoint(bindAddress, GetArg("-rpcport", 8332));
+    ip::tcp::endpoint endpoint(bindAddress, GetArg("-rpcport", 8338));
     ip::tcp::acceptor acceptor(io_service, endpoint);
 
     acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
@@ -1866,7 +1977,7 @@ void ThreadRPCServer2(void* parg)
     }
 #else
     if (fUseSSL)
-        throw runtime_error("-rpcssl=1, but bitcoin compiled without full openssl libraries.");
+        throw runtime_error("-rpcssl=1, but ixcoin compiled without full openssl libraries.");
 #endif
 
     loop
@@ -2015,13 +2126,13 @@ Object CallRPC(const string& strMethod, const Array& params)
     SSLStream sslStream(io_service, context);
     SSLIOStreamDevice d(sslStream, fUseSSL);
     iostreams::stream<SSLIOStreamDevice> stream(d);
-    if (!d.connect(GetArg("-rpcconnect", "127.0.0.1"), GetArg("-rpcport", "8332")))
+    if (!d.connect(GetArg("-rpcconnect", "127.0.0.1"), GetArg("-rpcport", "8338")))
         throw runtime_error("couldn't connect to server");
 #else
     if (fUseSSL)
-        throw runtime_error("-rpcssl=1, but bitcoin compiled without full openssl libraries.");
+        throw runtime_error("-rpcssl=1, but ixcoin compiled without full openssl libraries.");
 
-    ip::tcp::iostream stream(GetArg("-rpcconnect", "127.0.0.1"), GetArg("-rpcport", "8332"));
+    ip::tcp::iostream stream(GetArg("-rpcconnect", "127.0.0.1"), GetArg("-rpcport", "8338"));
     if (stream.fail())
         throw runtime_error("couldn't connect to server");
 #endif
@@ -2123,7 +2234,8 @@ int CommandLineRPC(int argc, char *argv[])
         if (strMethod == "listreceivedbylabel"    && n > 0) ConvertTo<boost::int64_t>(params[0]); // deprecated
         if (strMethod == "listreceivedbylabel"    && n > 1) ConvertTo<bool>(params[1]); // deprecated
         if (strMethod == "getbalance"             && n > 1) ConvertTo<boost::int64_t>(params[1]);
-        if (strMethod == "move"                   && n > 2) ConvertTo<double>(params[2]);
+        if (strMethod == "getblock"               && n > 0) ConvertTo<boost::int64_t>(params[0]);
+		if (strMethod == "move"                   && n > 2) ConvertTo<double>(params[2]);
         if (strMethod == "move"                   && n > 3) ConvertTo<boost::int64_t>(params[3]);
         if (strMethod == "sendfrom"               && n > 2) ConvertTo<double>(params[2]);
         if (strMethod == "sendfrom"               && n > 3) ConvertTo<boost::int64_t>(params[3]);
@@ -2181,7 +2293,7 @@ int CommandLineRPC(int argc, char *argv[])
 #if defined(__WXMSW__) && defined(GUI)
         // Windows GUI apps can't print to command line,
         // so settle for a message box yuck
-        MyMessageBox(strPrint, "Bitcoin", wxOK);
+        MyMessageBox(strPrint, "Ixcoin", wxOK);
 #else
         fprintf((nRet == 0 ? stdout : stderr), "%s\n", strPrint.c_str());
 #endif

@@ -1,5 +1,6 @@
-Bitcoin 0.3.24 BETA
+Ixcoin 0.3.24 BETA
 
+Copyright (c) 2011 Ixcoin Developers
 Copyright (c) 2009-2011 Bitcoin Developers
 Distributed under the MIT/X11 software license, see the accompanying
 file license.txt or http://www.opensource.org/licenses/mit-license.php.
@@ -15,14 +16,19 @@ completely decentralized, without the need for a central server or trusted
 parties.  Users hold the crypto keys to their own money and transact directly
 with each other, with the help of a P2P network to check for double-spending.
 
+Ixcoin is a fork of the Bitcoin that will mature at approximately twice the 
+speed of Bitcoin.
 
 Setup
 -----
 Unpack the files into a directory and run:
- bin/32/bitcoin (GUI, 32-bit)
- bin/32/bitcoind (headless, 32-bit)
- bin/64/bitcoin (GUI, 64-bit)
- bin/64/bitcoind (headless, 64-bit)
+ bin/32/ixcoin (GUI, 32-bit)
+ bin/32/ixcoind (headless, 32-bit)
+ bin/64/ixcoin (GUI, 64-bit)
+ bin/64/ixcoind (headless, 64-bit)
+
+See the documentation at the ixcoin wiki:
+  http://ixcoin.org/wiki
 
 See the documentation at the bitcoin wiki:
   https://en.bitcoin.it/wiki/Main_Page

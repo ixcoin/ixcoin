@@ -277,10 +277,10 @@ CMainFrame::CMainFrame(wxWindow* parent) : CMainFrameBase(parent)
     m_choiceFilter->SetSelection(0);
     double dResize = nScaleX;
 #ifdef __WXMSW__
-    SetIcon(wxICON(bitcoin));
+    SetIcon(wxICON(ixcoin));
     SetSize(dResize * GetSize().GetWidth(), nScaleY * GetSize().GetHeight());
 #else
-    SetIcon(bitcoin80_xpm);
+    SetIcon(ixcoin80_xpm);
     SetBackgroundColour(m_toolBar->GetBackgroundColour());
     wxFont fontTmp = m_staticText41->GetFont();
     fontTmp.SetFamily(wxFONTFAMILY_TELETYPE);
@@ -522,7 +522,7 @@ string FormatTxStatus(const CWalletTx& wtx)
     // Status
     if (!wtx.IsFinal())
     {
-        if (wtx.nLockTime < 500000000)
+        if (wtx.nLockTime < LOCKTIME_THRESHOLD)
             return strprintf(_("Open for %d blocks"), nBestHeight - wtx.nLockTime);
         else
             return strprintf(_("Open until %s"), DateTimeStr(wtx.nLockTime).c_str());
@@ -1495,7 +1495,7 @@ void CTxDetailsDialog::OnButtonOK(wxCommandEvent& event)
 #ifdef __WXMSW__
 string StartupShortcutPath()
 {
-    return MyGetSpecialFolderPath(CSIDL_STARTUP, true) + "\\Bitcoin.lnk";
+    return MyGetSpecialFolderPath(CSIDL_STARTUP, true) + "\\Ixcoin.lnk";
 }
 
 bool GetStartOnSystemStartup()
@@ -1568,7 +1568,7 @@ boost::filesystem::path GetAutostartDir()
 
 boost::filesystem::path GetAutostartFilePath()
 {
-    return GetAutostartDir() / boost::filesystem::path("bitcoin.desktop");
+    return GetAutostartDir() / boost::filesystem::path("ixcoin.desktop");
 }
 
 bool GetStartOnSystemStartup()
@@ -1608,13 +1608,13 @@ void SetStartOnSystemStartup(bool fAutoStart)
         boost::filesystem::ofstream optionFile(GetAutostartFilePath(), ios_base::out|ios_base::trunc);
         if (!optionFile.good())
         {
-            wxMessageBox(_("Cannot write autostart/bitcoin.desktop file"), "Bitcoin");
+            wxMessageBox(_("Cannot write autostart/ixcoin.desktop file"), "Ixcoin");
             return;
         }
-        // Write a bitcoin.desktop file to the autostart directory:
+        // Write a ixcoin.desktop file to the autostart directory:
         optionFile << "[Desktop Entry]\n";
         optionFile << "Type=Application\n";
-        optionFile << "Name=Bitcoin\n";
+        optionFile << "Name=Ixcoin\n";
         optionFile << "Exec=" << pszExePath << "\n";
         optionFile << "Terminal=false\n";
         optionFile << "Hidden=false\n";
@@ -1654,7 +1654,7 @@ COptionsDialog::COptionsDialog(wxWindow* parent) : COptionsDialogBase(parent)
     SetSize(nScaleX * GetSize().GetWidth(), nScaleY * GetSize().GetHeight());
 #endif
 #if defined(__WXGTK__) || defined(__WXMAC_OSX__)
-    m_checkBoxStartOnSystemStartup->SetLabel(_("&Start Bitcoin on window system startup"));
+    m_checkBoxStartOnSystemStartup->SetLabel(_("&Start Ixcoin on window system startup"));
     if (!GetBoolArg("-minimizetotray"))
     {
         // Minimize to tray is just too buggy on Linux
@@ -1871,7 +1871,7 @@ CSendDialog::CSendDialog(wxWindow* parent, const wxString& strAddress) : CSendDi
     }
 #ifdef __WXMSW__
     else
-        SetIcon(wxICON(bitcoin));
+        SetIcon(wxICON(ixcoin));
 #endif
 
     // Fixup the tab order
@@ -2370,7 +2370,7 @@ CAddressBookDialog::CAddressBookDialog(wxWindow* parent, const wxString& strInit
     }
 #ifdef __WXMSW__
     else
-        SetIcon(wxICON(bitcoin));
+        SetIcon(wxICON(ixcoin));
 #endif
 
     // Init column headers
@@ -2378,7 +2378,7 @@ CAddressBookDialog::CAddressBookDialog(wxWindow* parent, const wxString& strInit
     m_listCtrlSending->InsertColumn(1, _("Address"), wxLIST_FORMAT_LEFT, 350);
     m_listCtrlSending->SetFocus();
     m_listCtrlReceiving->InsertColumn(0, _("Label"), wxLIST_FORMAT_LEFT, 200);
-    m_listCtrlReceiving->InsertColumn(1, _("Bitcoin Address"), wxLIST_FORMAT_LEFT, 350);
+    m_listCtrlReceiving->InsertColumn(1, _("Ixcoin Address"), wxLIST_FORMAT_LEFT, 350);
     m_listCtrlReceiving->SetFocus();
 
     // Fill listctrl with address book data
@@ -2646,11 +2646,11 @@ void CMyTaskBarIcon::Show(bool fShow)
     static char pszPrevTip[200];
     if (fShow)
     {
-        string strTooltip = _("Bitcoin");
+        string strTooltip = _("Ixcoin");
         if (fGenerateBitcoins)
-            strTooltip = _("Bitcoin - Generating");
+            strTooltip = _("Ixcoin - Generating");
         if (fGenerateBitcoins && vNodes.empty())
-            strTooltip = _("Bitcoin - (not connected)");
+            strTooltip = _("Ixcoin - (not connected)");
 
         // Optimization, only update when changed, using char array to be reentrant
         if (strncmp(pszPrevTip, strTooltip.c_str(), sizeof(pszPrevTip)-1) != 0)
@@ -2661,7 +2661,7 @@ void CMyTaskBarIcon::Show(bool fShow)
             // we use the main icon, so we hand it one with only 16x16
             SetIcon(wxICON(favicon), strTooltip);
 #else
-            SetIcon(bitcoin80_xpm, strTooltip);
+            SetIcon(ixcoin80_xpm, strTooltip);
 #endif
         }
     }
@@ -2729,8 +2729,8 @@ void CMyTaskBarIcon::UpdateTooltip()
 wxMenu* CMyTaskBarIcon::CreatePopupMenu()
 {
     wxMenu* pmenu = new wxMenu;
-    pmenu->Append(ID_TASKBAR_RESTORE, _("&Open Bitcoin"));
-    pmenu->Append(ID_TASKBAR_SEND, _("&Send Bitcoins"));
+    pmenu->Append(ID_TASKBAR_RESTORE, _("&Open Ixcoin"));
+    pmenu->Append(ID_TASKBAR_SEND, _("&Send Ixcoins"));
     pmenu->Append(ID_TASKBAR_OPTIONS, _("O&ptions..."));
 #ifndef __WXMAC_OSX__ // Mac has built-in quit menu
     pmenu->AppendSeparator();
@@ -2864,9 +2864,9 @@ bool CMyApp::OnInit()
     g_isPainting = 10000;
 #endif
 #if defined(__WXMSW__ ) || defined(__WXMAC_OSX__)
-    SetAppName("Bitcoin");
+    SetAppName("Ixcoin");
 #else
-    SetAppName("bitcoin");
+    SetAppName("Ixcoin");
 #endif
 #ifdef __WXMSW__
 #if wxUSE_UNICODE
@@ -2882,7 +2882,7 @@ bool CMyApp::OnInit()
         ((wxMBConv_win32*)&wxConvLibc)->m_CodePage = CP_UTF8;
 #endif
 #endif
-
+ 
     // Load locale/<lang>/LC_MESSAGES/bitcoin.mo language file
     g_locale.Init(wxLANGUAGE_DEFAULT, 0);
     g_locale.AddCatalogLookupPathPrefix("locale");
@@ -2891,7 +2891,7 @@ bool CMyApp::OnInit()
     g_locale.AddCatalogLookupPathPrefix("/usr/local/share/locale");
 #endif
     g_locale.AddCatalog("wxstd"); // wxWidgets standard translations, if any
-    g_locale.AddCatalog("bitcoin");
+    g_locale.AddCatalog("bitcoin"); //ixcoin todo
 
 #ifdef __WXMSW__
     HDC hdc = GetDC(NULL);
