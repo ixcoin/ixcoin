@@ -640,7 +640,11 @@ int64 static GetBlockValue(int nHeight, int64 nFees)
 
     // Subsidy is cut in half every 4 years
     nSubsidy >>= (nHeight / 210000);
-
+	
+	//Hard limit to 21M Ixcoins
+	if (nHeight >= 218750)
+		nSubsidy = 0;
+		
     return nSubsidy + nFees;
 }
 
