@@ -156,7 +156,8 @@ inline bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>
 
 
 
-#define ADDRESSVERSION   ((unsigned char)(fTestNet ? 111 : 138))  //0 ixcoin 104 => h, 120 => x  139
+#define BITCOIN_ADDRESSVERSION   ((unsigned char)(fTestNet ? 111 : 0))  //ixcoin
+#define ADDRESSVERSION   ((unsigned char)(fTestNet ? 111 : 138))  //ixcoin 
 
 inline std::string Hash160ToAddress(uint160 hash160)
 {
@@ -177,7 +178,7 @@ inline bool AddressToHash160(const char* psz, uint160& hash160Ret)
     if (vch.size() != sizeof(hash160Ret) + 1)
         return false;
     memcpy(&hash160Ret, &vch[1], sizeof(hash160Ret));
-    return (nVersion <= ADDRESSVERSION);
+    return (nVersion != BITCOIN_ADDRESSVERSION && nVersion <= ADDRESSVERSION);
 }
 
 inline bool AddressToHash160(const std::string& str, uint160& hash160Ret)
