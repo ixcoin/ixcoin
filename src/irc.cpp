@@ -267,12 +267,13 @@ void ThreadIRCSeed2(void* parg)
 
     while (!fShutdown)
     {
-        //CAddress addrConnect("216.155.130.130:6667"); // chat.freenode.net
-        CAddress addrConnect("92.243.23.21", 6667); // irc.lfnet.org
-        if (!fTOR)
+        CAddress addrConnect("216.155.130.130:6667"); // chat.freenode.net // ixcoin
+        //CAddress addrConnect("92.243.23.21", 6667); // irc.lfnet.org <<======
+		if (!fTOR)
         {
             //struct hostent* phostent = gethostbyname("chat.freenode.net");
-            CAddress addrIRC("irc.lfnet.org", 6667, true);
+            //CAddress addrIRC("irc.lfnet.org", 6667, true);
+            CAddress addrIRC("chat.freenode.net", 6667, true); // ixcoin
             if (addrIRC.IsValid())
                 addrConnect = addrIRC;
         }
@@ -344,13 +345,15 @@ void ThreadIRCSeed2(void* parg)
         }
         
         if (fTestNet) {
-            Send(hSocket, "JOIN #bitcoinTEST\r");
-            Send(hSocket, "WHO #bitcoinTEST\r");
+            Send(hSocket, "JOIN #ixcoinTEST\r");
+            Send(hSocket, "WHO #ixcoinTEST\r");
         } else {
             // randomly join #bitcoin00-#bitcoin99
-            int channel_number = GetRandInt(100);
-            Send(hSocket, strprintf("JOIN #bitcoin%02d\r", channel_number).c_str());
-            Send(hSocket, strprintf("WHO #bitcoin%02d\r", channel_number).c_str());
+            //int channel_number = GetRandInt(100);
+            //Send(hSocket, strprintf("JOIN #bitcoin%02d\r", channel_number).c_str());
+            //Send(hSocket, strprintf("WHO #bitcoin%02d\r", channel_number).c_str());
+			Send(hSocket, "JOIN  #ixcoin\r"); //ixcoin
+            Send(hSocket, "WHO  #ixcoin\r");  //ixcoin
         }
 
         int64 nStart = GetTime();

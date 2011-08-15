@@ -528,7 +528,7 @@ bool CAddrDB::LoadAddresses()
                 char psz[1000];
                 while (fgets(psz, sizeof(psz), filein))
                 {
-                    CAddress addr(psz, false, NODE_NETWORK);
+                    CAddress addr(psz, NODE_NETWORK);
                     addr.nTime = 0; // so it won't relay unless successfully connected
                     if (addr.IsValid())
                         AddAddress(addr);
@@ -627,6 +627,8 @@ int64 CWalletDB::GetAccountCreditDebit(const string& strAccount)
 
 void CWalletDB::ListAccountCreditDebit(const string& strAccount, list<CAccountingEntry>& entries)
 {
+    int64 nCreditDebit = 0;
+
     bool fAllAccounts = (strAccount == "*");
 
     Dbc* pcursor = GetCursor();
@@ -668,7 +670,7 @@ void CWalletDB::ListAccountCreditDebit(const string& strAccount, list<CAccountin
 }
 
 
-int CWalletDB::LoadWallet(CWallet* pwallet)
+bool CWalletDB::LoadWallet(CWallet* pwallet)
 {
     pwallet->vchDefaultKey.clear();
     int nFileVersion = 0;
@@ -683,12 +685,12 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
 
     //// todo: shouldn't we catch exceptions and try to recover and continue?
     CRITICAL_BLOCK(pwallet->cs_mapWallet)
-    CRITICAL_BLOCK(pwallet->cs_KeyStore)
+    CRITICAL_BLOCK(pwallet->cs_mapKeys)
     {
         // Get cursor
         Dbc* pcursor = GetCursor();
         if (!pcursor)
-            return DB_CORRUPT;
+            return false;
 
         loop
         {
@@ -699,7 +701,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
             if (ret == DB_NOTFOUND)
                 break;
             else if (ret != 0)
-                return DB_CORRUPT;
+                return false;
 
             // Unserialize
             // Taking advantage of the fact that pair serialization
@@ -763,42 +765,14 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
             {
                 vector<unsigned char> vchPubKey;
                 ssKey >> vchPubKey;
-                CKey key;
+                CWalletKey wkey;
                 if (strType == "key")
-                {
-                    CPrivKey pkey;
-                    ssValue >> pkey;
-                    key.SetPrivKey(pkey);
-                }
+                    ssValue >> wkey.vchPrivKey;
                 else
-                {
-                    CWalletKey wkey;
                     ssValue >> wkey;
-                    key.SetPrivKey(wkey.vchPrivKey);
-                }
-                if (!pwallet->LoadKey(key))
-                    return DB_CORRUPT;
-            }
-            else if (strType == "mkey")
-            {
-                unsigned int nID;
-                ssKey >> nID;
-                CMasterKey kMasterKey;
-                ssValue >> kMasterKey;
-                if(pwallet->mapMasterKeys.count(nID) != 0)
-                    return DB_CORRUPT;
-                pwallet->mapMasterKeys[nID] = kMasterKey;
-                if (pwallet->nMasterKeyMaxID < nID)
-                    pwallet->nMasterKeyMaxID = nID;
-            }
-            else if (strType == "ckey")
-            {
-                vector<unsigned char> vchPubKey;
-                ssKey >> vchPubKey;
-                vector<unsigned char> vchPrivKey;
-                ssValue >> vchPrivKey;
-                if (!pwallet->LoadCryptedKey(vchPubKey, vchPrivKey))
-                    return DB_CORRUPT;
+
+                pwallet->mapKeys[vchPubKey] = wkey.vchPrivKey;
+                mapPubKeys[Hash160(vchPubKey)] = vchPubKey;
             }
             else if (strType == "defaultkey")
             {
@@ -826,6 +800,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
                 if (strKey == "fGenerateBitcoins")  ssValue >> fGenerateBitcoins;
 #endif
                 if (strKey == "nTransactionFee")    ssValue >> nTransactionFee;
+                if (strKey == "addrIncoming")       ssValue >> addrIncoming;
                 if (strKey == "fLimitProcessors")   ssValue >> fLimitProcessors;
                 if (strKey == "nLimitProcessors")   ssValue >> nLimitProcessors;
                 if (strKey == "fMinimizeToTray")    ssValue >> fMinimizeToTray;
@@ -833,13 +808,6 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
                 if (strKey == "fUseProxy")          ssValue >> fUseProxy;
                 if (strKey == "addrProxy")          ssValue >> addrProxy;
                 if (fHaveUPnP && strKey == "fUseUPnP")           ssValue >> fUseUPnP;
-            }
-            else if (strType == "minversion")
-            {
-                int nMinVersion = 0;
-                ssValue >> nMinVersion;
-                if (nMinVersion > VERSION)
-                    return DB_TOO_NEW;
             }
         }
         pcursor->close();
@@ -851,6 +819,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
     printf("nFileVersion = %d\n", nFileVersion);
     printf("fGenerateBitcoins = %d\n", fGenerateBitcoins);
     printf("nTransactionFee = %"PRI64d"\n", nTransactionFee);
+    printf("addrIncoming = %s\n", addrIncoming.ToString().c_str());
     printf("fMinimizeToTray = %d\n", fMinimizeToTray);
     printf("fMinimizeOnClose = %d\n", fMinimizeOnClose);
     printf("fUseProxy = %d\n", fUseProxy);
@@ -870,7 +839,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
     }
 
 
-    return DB_LOAD_OK;
+    return true;
 }
 
 void ThreadFlushWalletDB(void* parg)

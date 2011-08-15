@@ -10,8 +10,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/foreach.hpp>
-
 class CTransaction;
 
 enum
@@ -488,7 +486,7 @@ public:
     {
         // I'm not sure if this should push the script or concatenate scripts.
         // If there's ever a use for pushing a script onto a script, delete this member fn
-        assert(!"warning: pushing a CScript onto a CScript with << is probably not intended, use + to concatenate");
+        assert(("warning: pushing a CScript onto a CScript with << is probably not intended, use + to concatenate", false));
         return *this;
     }
 
@@ -624,7 +622,7 @@ public:
     }
 
 
-    CBitcoinAddress GetBitcoinAddress() const
+    uint160 GetBitcoinAddressHash160() const
     {
         opcodetype opcode;
         std::vector<unsigned char> vch;
@@ -636,18 +634,36 @@ public:
         if (!GetOp(pc, opcode, vch) || opcode != OP_EQUALVERIFY) return 0;
         if (!GetOp(pc, opcode, vch) || opcode != OP_CHECKSIG) return 0;
         if (pc != end()) return 0;
-        return CBitcoinAddress(hash160);
+        return hash160;
     }
 
-    void SetBitcoinAddress(const CBitcoinAddress& address)
+    std::string GetBitcoinAddress() const
+    {
+        uint160 hash160 = GetBitcoinAddressHash160();
+        if (hash160 == 0)
+            return "";
+        return Hash160ToAddress(hash160);
+    }
+
+    void SetBitcoinAddress(const uint160& hash160)
     {
         this->clear();
-        *this << OP_DUP << OP_HASH160 << address.GetHash160() << OP_EQUALVERIFY << OP_CHECKSIG;
+        *this << OP_DUP << OP_HASH160 << hash160 << OP_EQUALVERIFY << OP_CHECKSIG;
     }
 
     void SetBitcoinAddress(const std::vector<unsigned char>& vchPubKey)
     {
-        SetBitcoinAddress(CBitcoinAddress(vchPubKey));
+        SetBitcoinAddress(Hash160(vchPubKey));
+    }
+
+    bool SetBitcoinAddress(const std::string& strAddress)
+    {
+        this->clear();
+        uint160 hash160;
+        if (!AddressToHash160(strAddress, hash160))
+            return false;
+        SetBitcoinAddress(hash160);
+        return true;
     }
 
 
@@ -691,11 +707,11 @@ public:
 
 
 
-bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, const CTransaction& txTo, unsigned int nIn, int nHashType);
 
 bool IsStandard(const CScript& scriptPubKey);
 bool IsMine(const CKeyStore& keystore, const CScript& scriptPubKey);
-bool ExtractAddress(const CScript& scriptPubKey, const CKeyStore* pkeystore, CBitcoinAddress& addressRet);
+bool ExtractPubKey(const CScript& scriptPubKey, const CKeyStore* pkeystore, std::vector<unsigned char>& vchPubKeyRet);
+bool ExtractHash160(const CScript& scriptPubKey, uint160& hash160Ret);
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL, CScript scriptPrereq=CScript());
 bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsigned int nIn, int nHashType=0);
 

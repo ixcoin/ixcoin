@@ -52,7 +52,7 @@ void Shutdown(void* parg)
         delete pwalletMain;
         CreateThread(ExitTimeout, NULL);
         Sleep(50);
-        printf("Bitcoin exiting\n\n");
+        printf("Ixcoin exiting\n\n");
         fExit = true;
         exit(0);
     }
@@ -159,15 +159,15 @@ bool AppInit2(int argc, char* argv[])
     if (mapArgs.count("-?") || mapArgs.count("--help"))
     {
         string strUsage = string() +
-          _("Bitcoin version") + " " + FormatFullVersion() + "\n\n" +
+          _("Ixcoin version") + " " + FormatFullVersion() + "\n\n" +
           _("Usage:") + "\t\t\t\t\t\t\t\t\t\t\n" +
-            "  bitcoin [options]                   \t  " + "\n" +
-            "  bitcoin [options] <command> [params]\t  " + _("Send command to -server or bitcoind\n") +
-            "  bitcoin [options] help              \t\t  " + _("List commands\n") +
-            "  bitcoin [options] help <command>    \t\t  " + _("Get help for a command\n") +
+            "  ixcoin [options]                   \t  " + "\n" +
+            "  ixcoin [options] <command> [params]\t  " + _("Send command to -server or ixcoind\n") +
+            "  ixcoin [options] help              \t\t  " + _("List commands\n") +
+            "  ixcoin [options] help <command>    \t\t  " + _("Get help for a command\n") +
           _("Options:\n") +
-            "  -conf=<file>     \t\t  " + _("Specify configuration file (default: bitcoin.conf)\n") +
-            "  -pid=<file>      \t\t  " + _("Specify pid file (default: bitcoind.pid)\n") +
+            "  -conf=<file>     \t\t  " + _("Specify configuration file (default: ixcoin.conf)\n") +
+            "  -pid=<file>      \t\t  " + _("Specify pid file (default: ixcoind.pid)\n") +
             "  -gen             \t\t  " + _("Generate coins\n") +
             "  -gen=0           \t\t  " + _("Don't generate coins\n") +
             "  -min             \t\t  " + _("Start minimized\n") +
@@ -195,7 +195,7 @@ bool AppInit2(int argc, char* argv[])
             "  -testnet         \t\t  " + _("Use the test network\n") +
             "  -rpcuser=<user>  \t  "   + _("Username for JSON-RPC connections\n") +
             "  -rpcpassword=<pw>\t  "   + _("Password for JSON-RPC connections\n") +
-            "  -rpcport=<port>  \t\t  " + _("Listen for JSON-RPC connections on <port> (default: 8332)\n") +
+            "  -rpcport=<port>  \t\t  " + _("Listen for JSON-RPC connections on <port> (default: 8336)\n") + // 8332 ixcoin
             "  -rpcallowip=<ip> \t\t  " + _("Allow JSON-RPC connections from specified IP address\n") +
             "  -rpcconnect=<ip> \t  "   + _("Send commands to node running on <ip> (default: 127.0.0.1)\n") +
             "  -keypool=<n>     \t  "   + _("Set key pool size to <n> (default: 100)\n") +
@@ -215,7 +215,7 @@ bool AppInit2(int argc, char* argv[])
 
 #if defined(__WXMSW__) && defined(GUI)
         // Tabs make the columns line up in the message box
-        wxMessageBox(strUsage, "Bitcoin", wxOK);
+        wxMessageBox(strUsage, "Ixcoin", wxOK);
 #else
         // Remove tabs
         strUsage.erase(std::remove(strUsage.begin(), strUsage.end(), '\t'), strUsage.end());
@@ -247,8 +247,7 @@ bool AppInit2(int argc, char* argv[])
     fPrintToDebugger = GetBoolArg("-printtodebugger");
 
     fTestNet = GetBoolArg("-testnet");
-    bool fTOR = (fUseProxy && addrProxy.port == htons(9050));
-    fNoListen = GetBoolArg("-nolisten") || fTOR;
+    fNoListen = GetBoolArg("-nolisten");
     fLogTimestamps = GetBoolArg("-logtimestamps");
 
     for (int i = 1; i < argc; i++)
@@ -286,7 +285,7 @@ bool AppInit2(int argc, char* argv[])
     if (!fDebug && !pszSetDataDir[0])
         ShrinkDebugFile();
     printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    printf("Bitcoin version %s\n", FormatFullVersion().c_str());
+    printf("Ixcoin version %s\n", FormatFullVersion().c_str());
 #ifdef GUI
     printf("OS version %s\n", ((string)wxGetOsDescription()).c_str());
     printf("System default language is %d %s\n", g_locale.GetSystemLanguage(), ((string)g_locale.GetSysName()).c_str());
@@ -308,7 +307,7 @@ bool AppInit2(int argc, char* argv[])
     //
 #if defined(__WXMSW__) && defined(GUI)
     // wxSingleInstanceChecker doesn't work on Linux
-    wxString strMutexName = wxString("bitcoin_running.") + getenv("HOMEPATH");
+    wxString strMutexName = wxString("ixcoin_running.") + getenv("HOMEPATH");
     for (int i = 0; i < strMutexName.size(); i++)
         if (!isalnum(strMutexName[i]))
             strMutexName[i] = '.';
@@ -320,7 +319,7 @@ bool AppInit2(int argc, char* argv[])
         loop
         {
             // Show the previous instance and exit
-            HWND hwndPrev = FindWindowA("wxWindowClassNR", "Bitcoin");
+            HWND hwndPrev = FindWindowA("wxWindowClassNR", "Ixcoin");
             if (hwndPrev)
             {
                 if (IsIconic(hwndPrev))
@@ -349,7 +348,7 @@ bool AppInit2(int argc, char* argv[])
     static boost::interprocess::file_lock lock(strLockFile.c_str());
     if (!lock.try_lock())
     {
-        wxMessageBox(strprintf(_("Cannot obtain a lock on data directory %s.  Bitcoin is probably already running."), GetDataDir().c_str()), "Bitcoin");
+        wxMessageBox(strprintf(_("Cannot obtain a lock on data directory %s.  Ixcoin is probably already running."), GetDataDir().c_str()), "Ixcoin");
         return false;
     }
 
@@ -359,7 +358,7 @@ bool AppInit2(int argc, char* argv[])
     {
         if (!BindListenPort(strErrors))
         {
-            wxMessageBox(strErrors, "Bitcoin");
+            wxMessageBox(strErrors, "Ixcoin");
             return false;
         }
     }
@@ -368,7 +367,7 @@ bool AppInit2(int argc, char* argv[])
     // Load data files
     //
     if (fDaemon)
-        fprintf(stdout, "bitcoin server starting\n");
+        fprintf(stdout, "ixcoin server starting\n");
     strErrors = "";
     int64 nStart;
 
@@ -388,16 +387,8 @@ bool AppInit2(int argc, char* argv[])
     nStart = GetTimeMillis();
     bool fFirstRun;
     pwalletMain = new CWallet("wallet.dat");
-    int nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
-    if (nLoadWalletRet != DB_LOAD_OK)
-    {
-        if (nLoadWalletRet == DB_CORRUPT)
-            strErrors += _("Error loading wallet.dat: Wallet corrupted      \n");
-        else if (nLoadWalletRet == DB_TOO_NEW)
-            strErrors += _("Error loading wallet.dat: Wallet requires newer version of Bitcoin      \n");
-        else
-            strErrors += _("Error loading wallet.dat      \n");
-    }
+    if (!pwalletMain->LoadWallet(fFirstRun))
+        strErrors += _("Error loading wallet.dat      \n");
     printf(" wallet      %15"PRI64d"ms\n", GetTimeMillis() - nStart);
 
     RegisterWallet(pwalletMain);
@@ -425,13 +416,15 @@ bool AppInit2(int argc, char* argv[])
         //// debug print
         printf("mapBlockIndex.size() = %d\n",   mapBlockIndex.size());
         printf("nBestHeight = %d\n",            nBestHeight);
+        printf("mapKeys.size() = %d\n",         pwalletMain->mapKeys.size());
         printf("setKeyPool.size() = %d\n",      pwalletMain->setKeyPool.size());
+        printf("mapPubKeys.size() = %d\n",      mapPubKeys.size());
         printf("mapWallet.size() = %d\n",       pwalletMain->mapWallet.size());
         printf("mapAddressBook.size() = %d\n",  pwalletMain->mapAddressBook.size());
 
     if (!strErrors.empty())
     {
-        wxMessageBox(strErrors, "Bitcoin", wxOK | wxICON_ERROR);
+        wxMessageBox(strErrors, "Ixcoin", wxOK | wxICON_ERROR);
         return false;
     }
 
@@ -485,7 +478,7 @@ bool AppInit2(int argc, char* argv[])
         addrProxy = CAddress(mapArgs["-proxy"]);
         if (!addrProxy.IsValid())
         {
-            wxMessageBox(_("Invalid -proxy address"), "Bitcoin");
+            wxMessageBox(_("Invalid -proxy address"), "Ixcoin");
             return false;
         }
     }
@@ -503,18 +496,20 @@ bool AppInit2(int argc, char* argv[])
 
     if (GetBoolArg("-nodnsseed"))
         printf("DNS seeding disabled\n");
-    else
+    else if (mapArgs.count("-dnsseed")) //ixcoin
         DNSAddressSeed();
+	else
+		printf("DNS seeding disabled by default with Ixcoin\n");
 
     if (mapArgs.count("-paytxfee"))
     {
         if (!ParseMoney(mapArgs["-paytxfee"], nTransactionFee))
         {
-            wxMessageBox(_("Invalid amount for -paytxfee=<amount>"), "Bitcoin");
+            wxMessageBox(_("Invalid amount for -paytxfee=<amount>"), "Ixcoin");
             return false;
         }
         if (nTransactionFee > 0.25 * COIN)
-            wxMessageBox(_("Warning: -paytxfee is set very high.  This is the transaction fee you will pay if you send a transaction."), "Bitcoin", wxOK | wxICON_EXCLAMATION);
+            wxMessageBox(_("Warning: -paytxfee is set very high.  This is the transaction fee you will pay if you send a transaction."), "Ixcoin", wxOK | wxICON_EXCLAMATION);
     }
 
     if (fHaveUPnP)
@@ -542,7 +537,7 @@ bool AppInit2(int argc, char* argv[])
     RandAddSeedPerfmon();
 
     if (!CreateThread(StartNode, NULL))
-        wxMessageBox("Error: CreateThread(StartNode) failed", "Bitcoin");
+        wxMessageBox("Error: CreateThread(StartNode) failed", "Ixcoin");
 
     if (fServer)
         CreateThread(ThreadRPCServer, NULL);

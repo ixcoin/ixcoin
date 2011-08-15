@@ -98,8 +98,6 @@ class CMainFrameBase : public wxFrame
 		virtual void OnPaint( wxPaintEvent& event ) { event.Skip(); }
 		virtual void OnMenuFileExit( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnMenuOptionsChangeYourAddress( wxCommandEvent& event ) { event.Skip(); }
-		virtual void OnMenuOptionsEncryptWallet( wxCommandEvent& event ) { event.Skip(); }
-		virtual void OnMenuOptionsChangeWalletPassphrase( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnMenuOptionsOptions( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnMenuHelpAbout( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonSend( wxCommandEvent& event ) { event.Skip(); }
@@ -117,8 +115,6 @@ class CMainFrameBase : public wxFrame
 	
 	public:
 		wxMenu* m_menuOptions;
-		wxMenuItem* m_menuOptionsEncryptWallet;
-		wxMenuItem* m_menuOptionsChangeWalletPassphrase;
 		wxStatusBar* m_statusBar;
 		wxTextCtrl* m_textCtrlAddress;
 		wxListCtrl* m_listCtrlAll;
@@ -126,7 +122,7 @@ class CMainFrameBase : public wxFrame
 		wxListCtrl* m_listCtrlSent;
 		wxListCtrl* m_listCtrlReceived;
 		
-		CMainFrameBase( wxWindow* parent, wxWindowID id = wxID_MAINFRAME, const wxString& title = _("Bitcoin"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 723,484 ), long style = wxDEFAULT_FRAME_STYLE|wxRESIZE_BORDER|wxTAB_TRAVERSAL );
+		CMainFrameBase( wxWindow* parent, wxWindowID id = wxID_MAINFRAME, const wxString& title = _("Ixcoin"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 723,484 ), long style = wxDEFAULT_FRAME_STYLE|wxRESIZE_BORDER|wxTAB_TRAVERSAL );
 		~CMainFrameBase();
 	
 };
@@ -229,7 +225,7 @@ class CAboutDialogBase : public wxDialog
 	public:
 		wxStaticText* m_staticTextVersion;
 		
-		CAboutDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("About Bitcoin"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 532,333 ), long style = wxDEFAULT_DIALOG_STYLE );
+		CAboutDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("About Ixcoin"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 532,333 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~CAboutDialogBase();
 	
 };
@@ -338,7 +334,7 @@ class CYourAddressDialogBase : public wxDialog
 	
 	public:
 		
-		CYourAddressDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Your Bitcoin Addresses"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 610,390 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
+		CYourAddressDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Your Ixcoin Addresses"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 610,390 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
 		~CYourAddressDialogBase();
 	
 };

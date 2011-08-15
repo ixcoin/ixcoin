@@ -88,7 +88,7 @@ protected:
         if (!pdb)
             return false;
         if (fReadOnly)
-            assert(!"Write called on database in read-only mode");
+            assert(("Write called on database in read-only mode", false));
 
         // Key
         CDataStream ssKey(SER_DISK);
@@ -117,7 +117,7 @@ protected:
         if (!pdb)
             return false;
         if (fReadOnly)
-            assert(!"Erase called on database in read-only mode");
+            assert(("Erase called on database in read-only mode", false));
 
         // Key
         CDataStream ssKey(SER_DISK);
@@ -342,14 +342,6 @@ public:
 
 
 
-enum DBErrors
-{
-    DB_LOAD_OK,
-    DB_CORRUPT,
-    DB_TOO_NEW,
-    DB_LOAD_FAIL,
-};
-
 class CWalletDB : public CDB
 {
 public:
@@ -397,25 +389,6 @@ public:
     {
         nWalletDBUpdated++;
         return Write(std::make_pair(std::string("key"), vchPubKey), vchPrivKey, false);
-    }
-
-    bool WriteCryptedKey(const std::vector<unsigned char>& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, bool fEraseUnencryptedKey = true)
-    {
-        nWalletDBUpdated++;
-        if (!Write(std::make_pair(std::string("ckey"), vchPubKey), vchCryptedSecret, false))
-            return false;
-        if (fEraseUnencryptedKey)
-        {
-            Erase(std::make_pair(std::string("key"), vchPubKey));
-            Erase(std::make_pair(std::string("wkey"), vchPubKey));
-        }
-        return true;
-    }
-
-    bool WriteMasterKey(unsigned int nID, const CMasterKey& kMasterKey)
-    {
-        nWalletDBUpdated++;
-        return Write(std::make_pair(std::string("mkey"), nID), kMasterKey, true);
     }
 
     bool WriteBestBlock(const CBlockLocator& locator)
@@ -477,7 +450,7 @@ public:
     int64 GetAccountCreditDebit(const std::string& strAccount);
     void ListAccountCreditDebit(const std::string& strAccount, std::list<CAccountingEntry>& acentries);
 
-    int LoadWallet(CWallet* pwallet);
+    bool LoadWallet(CWallet* pwallet);
 };
 
 #endif

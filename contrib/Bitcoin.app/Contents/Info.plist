@@ -3,29 +3,29 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>Bitcoin</string>
+	<string>Ixcoin</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>bitcoin</string>
+	<string>ixcoin</string>
 	<key>CFBundleIdentifier</key>
 	<string>org.bitcoin.bitcoin</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Bitcoin</string>
+	<string>Ixcoin</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.3.25</string>
+	<string>0.3.24</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>325</string>
+	<string>324</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.5</string>
 	<key>CFBundleIconFile</key>
-	<string>BitcoinAppIcon.icns</string>
+	<string>IxcoinAppIcon.icns</string>
 	<key>LSMultipleInstancesProhibited</key>
 	<true/>
 </dict>

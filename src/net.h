@@ -6,7 +6,6 @@
 
 #include <deque>
 #include <boost/array.hpp>
-#include <boost/foreach.hpp>
 #include <openssl/rand.h>
 
 #ifndef __WXMSW__
@@ -15,7 +14,6 @@
 
 class CMessageHeader;
 class CAddress;
-class CAddrDB;
 class CInv;
 class CRequestTracker;
 class CNode;
@@ -27,7 +25,7 @@ extern int nConnectTimeout;
 
 inline unsigned int ReceiveBufferSize() { return 1000*GetArg("-maxreceivebuffer", 10*1000); }
 inline unsigned int SendBufferSize() { return 1000*GetArg("-maxsendbuffer", 10*1000); }
-inline unsigned short GetDefaultPort() { return fTestNet ? 18333 : 8333; }
+inline unsigned short GetDefaultPort() { return fTestNet ? 18337 : 8337; } // ixcoin 
 static const unsigned int PUBLISH_HOPS = 5;
 enum
 {
@@ -41,7 +39,7 @@ bool ConnectSocket(const CAddress& addrConnect, SOCKET& hSocketRet, int nTimeout
 bool Lookup(const char *pszName, std::vector<CAddress>& vaddr, int nServices, int nMaxSolutions, bool fAllowLookup = false, int portDefault = 0, bool fAllowPort = false);
 bool Lookup(const char *pszName, CAddress& addr, int nServices, bool fAllowLookup = false, int portDefault = 0, bool fAllowPort = false);
 bool GetMyExternalIP(unsigned int& ipRet);
-bool AddAddress(CAddress addr, int64 nTimePenalty=0, CAddrDB *pAddrDB=NULL);
+bool AddAddress(CAddress addr, int64 nTimePenalty=0);
 void AddressCurrentlyConnected(const CAddress& addr);
 CNode* FindNode(unsigned int ip);
 CNode* ConnectNode(CAddress addrConnect, int64 nTimeout=0);

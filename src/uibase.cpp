@@ -32,12 +32,6 @@ CMainFrameBase::CMainFrameBase( wxWindow* parent, wxWindowID id, const wxString&
 	m_menuOptionsChangeYourAddress = new wxMenuItem( m_menuOptions, wxID_ANY, wxString( _("&Your Receiving Addresses...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuOptions->Append( m_menuOptionsChangeYourAddress );
 	
-	m_menuOptionsEncryptWallet = new wxMenuItem( m_menuOptions, wxID_ANY, wxString( _("&Encrypt Wallet...") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menuOptions->Append( m_menuOptionsEncryptWallet );
-	
-	m_menuOptionsChangeWalletPassphrase = new wxMenuItem( m_menuOptions, wxID_ANY, wxString( _("&Change Wallet Encryption Passphrase...") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menuOptions->Append( m_menuOptionsChangeWalletPassphrase );
-	
 	wxMenuItem* m_menuOptionsOptions;
 	m_menuOptionsOptions = new wxMenuItem( m_menuOptions, wxID_PREFERENCES, wxString( _("&Options...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuOptions->Append( m_menuOptionsOptions );
@@ -72,7 +66,7 @@ CMainFrameBase::CMainFrameBase( wxWindow* parent, wxWindowID id, const wxString&
 	wxBoxSizer* bSizer85;
 	bSizer85 = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_staticText32 = new wxStaticText( this, wxID_ANY, _("Your Bitcoin Address:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText32 = new wxStaticText( this, wxID_ANY, _("Your Ixcoin Address:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText32->Wrap( -1 );
 	bSizer85->Add( m_staticText32, 0, wxALIGN_CENTER_VERTICAL|wxLEFT, 5 );
 	
@@ -193,8 +187,6 @@ CMainFrameBase::CMainFrameBase( wxWindow* parent, wxWindowID id, const wxString&
 	this->Connect( wxEVT_PAINT, wxPaintEventHandler( CMainFrameBase::OnPaint ) );
 	this->Connect( m_menuFileExit->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuFileExit ) );
 	this->Connect( m_menuOptionsChangeYourAddress->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuOptionsChangeYourAddress ) );
-	this->Connect( m_menuOptionsEncryptWallet->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuOptionsEncryptWallet ) );
-	this->Connect( m_menuOptionsChangeWalletPassphrase->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuOptionsChangeWalletPassphrase ) );
 	this->Connect( m_menuOptionsOptions->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuOptionsOptions ) );
 	this->Connect( m_menuHelpAbout->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuHelpAbout ) );
 	this->Connect( wxID_BUTTONSEND, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( CMainFrameBase::OnButtonSend ) );
@@ -253,8 +245,6 @@ CMainFrameBase::~CMainFrameBase()
 	this->Disconnect( wxEVT_PAINT, wxPaintEventHandler( CMainFrameBase::OnPaint ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuFileExit ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuOptionsChangeYourAddress ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuOptionsEncryptWallet ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuOptionsChangeWalletPassphrase ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuOptionsOptions ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( CMainFrameBase::OnMenuHelpAbout ) );
 	this->Disconnect( wxID_BUTTONSEND, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( CMainFrameBase::OnButtonSend ) );
@@ -352,7 +342,7 @@ COptionsDialogBase::COptionsDialogBase( wxWindow* parent, wxWindowID id, const w
 	
 	bSizer69->Add( 0, 16, 0, wxEXPAND, 5 );
 	
-	m_checkBoxStartOnSystemStartup = new wxCheckBox( m_panelMain, wxID_ANY, _("&Start Bitcoin on system startup"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_checkBoxStartOnSystemStartup = new wxCheckBox( m_panelMain, wxID_ANY, _("&Start Ixcoin on system startup"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer69->Add( m_checkBoxStartOnSystemStartup, 0, wxALL, 5 );
 	
 	m_checkBoxMinimizeToTray = new wxCheckBox( m_panelMain, wxID_ANY, _("&Minimize to the tray instead of the taskbar"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -367,7 +357,7 @@ COptionsDialogBase::COptionsDialogBase( wxWindow* parent, wxWindowID id, const w
 	wxBoxSizer* bSizer102;
 	bSizer102 = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_checkBoxUseProxy = new wxCheckBox( m_panelMain, wxID_ANY, _("&Connect through socks4 proxy (requires restart to apply): "), wxDefaultPosition, wxDefaultSize, 0 );
+	m_checkBoxUseProxy = new wxCheckBox( m_panelMain, wxID_ANY, _("&Connect through socks4 proxy: "), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer102->Add( m_checkBoxUseProxy, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	bSizer69->Add( bSizer102, 1, wxEXPAND, 5 );
@@ -515,7 +505,7 @@ CAboutDialogBase::CAboutDialogBase( wxWindow* parent, wxWindowID id, const wxStr
 	wxBoxSizer* bSizer64;
 	bSizer64 = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_staticText40 = new wxStaticText( this, wxID_ANY, _("Bitcoin "), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText40 = new wxStaticText( this, wxID_ANY, _("Ixcoin "), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText40->Wrap( -1 );
 	m_staticText40->SetFont( wxFont( 10, 74, 90, 92, false, wxT("Tahoma") ) );
 	
@@ -532,7 +522,7 @@ CAboutDialogBase::CAboutDialogBase( wxWindow* parent, wxWindowID id, const wxStr
 	
 	bSizer631->Add( 0, 4, 0, wxEXPAND, 5 );
 	
-	m_staticTextMain = new wxStaticText( this, wxID_ANY, _("Copyright (c) 2009-2011 Bitcoin Developers\n\nThis is experimental software.\n\nDistributed under the MIT/X11 software license, see the accompanying file \nlicense.txt or http://www.opensource.org/licenses/mit-license.php.\n\nThis product includes software developed by the OpenSSL Project for use in the \nOpenSSL Toolkit (http://www.openssl.org/) and cryptographic software written by \nEric Young (eay@cryptsoft.com) and UPnP software written by Thomas Bernard."), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticTextMain = new wxStaticText( this, wxID_ANY, _("Copyright (c) 2011 Ixcoin Developers\n\nThis is experimental software based on Bitcoin.org.\n\nDistributed under the MIT/X11 software license, see the accompanying file \nlicense.txt or http://www.opensource.org/licenses/mit-license.php.\n\nThis product includes software developed by the OpenSSL Project for use in the \nOpenSSL Toolkit (http://www.openssl.org/) and cryptographic software written by \nEric Young (eay@cryptsoft.com) and UPnP software written by Thomas Bernard."), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticTextMain->Wrap( -1 );
 	bSizer631->Add( m_staticTextMain, 0, wxALL, 5 );
 	
@@ -588,7 +578,7 @@ CSendDialogBase::CSendDialogBase( wxWindow* parent, wxWindowID id, const wxStrin
 	
 	fgSizer1->Add( 0, 0, 0, wxEXPAND, 5 );
 	
-	m_staticTextInstructions = new wxStaticText( this, wxID_ANY, _("Enter a Bitcoin address (e.g. 1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticTextInstructions = new wxStaticText( this, wxID_ANY, _("Enter a Ixcoin address (e.g. xnS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticTextInstructions->Wrap( -1 );
 	fgSizer1->Add( m_staticTextInstructions, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
 	
@@ -768,7 +758,7 @@ CYourAddressDialogBase::CYourAddressDialogBase( wxWindow* parent, wxWindowID id,
 	
 	bSizer68->Add( 0, 5, 0, wxEXPAND, 5 );
 	
-	m_staticText45 = new wxStaticText( this, wxID_ANY, _("These are your Bitcoin addresses for receiving payments.  You may want to give a different one to each sender so you can keep track of who is paying you.  The highlighted address is displayed in the main window."), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText45 = new wxStaticText( this, wxID_ANY, _("These are your Ixcoin addresses for receiving payments.  You may want to give a different one to each sender so you can keep track of who is paying you.  The highlighted address is displayed in the main window."), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText45->Wrap( 590 );
 	bSizer68->Add( m_staticText45, 0, wxALL, 5 );
 	
@@ -844,7 +834,7 @@ CAddressBookDialogBase::CAddressBookDialogBase( wxWindow* parent, wxWindowID id,
 	
 	bSizer68->Add( 0, 0, 0, wxEXPAND, 5 );
 	
-	m_staticText55 = new wxStaticText( m_panelSending, wxID_ANY, _("Bitcoin Address"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText55 = new wxStaticText( m_panelSending, wxID_ANY, _("Ixcoin Address"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText55->Wrap( -1 );
 	m_staticText55->Hide();
 	
@@ -864,7 +854,7 @@ CAddressBookDialogBase::CAddressBookDialogBase( wxWindow* parent, wxWindowID id,
 	
 	bSizer681->Add( 0, 0, 0, wxEXPAND, 5 );
 	
-	m_staticText45 = new wxStaticText( m_panelReceiving, wxID_ANY, _("These are your Bitcoin addresses for receiving payments.  You can give a different one to each sender to keep track of who is paying you.  The highlighted address will be displayed in the main window."), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText45 = new wxStaticText( m_panelReceiving, wxID_ANY, _("These are your Ixcoin addresses for receiving payments.  You can give a different one to each sender to keep track of who is paying you.  The highlighted address will be displayed in the main window."), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText45->Wrap( 570 );
 	bSizer681->Add( m_staticText45, 0, wxTOP|wxRIGHT|wxLEFT, 6 );
 	

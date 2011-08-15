@@ -98,10 +98,10 @@ UPnP support is optional, make with USE_UPNP= to disable it.
 Get upnpc-exe-win32-20110215.zip and unzip it to \upnpc-exe-win32-20110215
 Get miniupnpc-1.5.20110215.tar.gz and copy *.h to \upnpc-exe-win32-20110215\miniupnpc
 
-Bitcoin
+Ixcoin
 -------
 DOS prompt:
-cd \bitcoin\src
-mingw32-make bitcoin.exe bitcoind.exe -f makefile.mingw
-strip bitcoin.exe
-strip bitcoind.exe
+cd \ixcoin\src
+mingw32-make ixcoin.exe ixcoind.exe -f makefile.mingw
+strip ixcoin.exe
+strip ixcoind.exe

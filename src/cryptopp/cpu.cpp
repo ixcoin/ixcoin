@@ -80,7 +80,7 @@ bool CpuId(word32 input, word32 *output)
 #endif
 }
 
-#if !CRYPTOPP_BOOL_X64 && !defined(_MSC_VER) && defined(__GNUC__)
+#ifndef _MSC_VER
 static jmp_buf s_jmpNoSSE2;
 static void SigIllHandlerSSE2(int)
 {
