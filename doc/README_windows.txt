@@ -1,4 +1,4 @@
-Ixcoin 0.3.24 BETA
+Ixcoin 0.3.24.1 BETA
 
 Copyright (c) 2011 Ixcoin Developers
 Copyright (c) 2009-2011 Bitcoin Developers
