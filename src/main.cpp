@@ -650,8 +650,11 @@ int64 static GetBlockValue(int nHeight, int64 nFees)
 
 unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast)
 {
-    const int64 nTargetTimespan = 14 * 24 * 60 * 60; // two weeks
-    const int64 nTargetSpacing = 10 * 60;
+    int64 nTargetTimespan = 14 * 24 * 60 * 60; // two weeks
+	bool revisedIxcoin = pindexLast->nHeight+1 > 20055; //next normal target: 20160
+	if (revisedIxcoin) nTargetTimespan = 24 * 60 * 60; //24 hours i.e. 144 blocks
+
+	const int64 nTargetSpacing = 10 * 60;
     const int64 nInterval = nTargetTimespan / nTargetSpacing;
 
     // Genesis block
@@ -670,11 +673,34 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast)
 
     // Limit adjustment step
     int64 nActualTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
-    printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
-    if (nActualTimespan < nTargetTimespan/4)
-        nActualTimespan = nTargetTimespan/4;
-    if (nActualTimespan > nTargetTimespan*4)
-        nActualTimespan = nTargetTimespan*4;
+    //printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
+    if (revisedIxcoin) {
+		if (nActualTimespan < nTargetTimespan/4)
+	        nActualTimespan = nTargetTimespan/4;
+	    if (nActualTimespan > nTargetTimespan*4)
+	        nActualTimespan = nTargetTimespan*4;
+	}
+	else {
+	    //Altered version of SolidCoin.info retargetting code
+		int64 nTwoPercent = nTargetTimespan/50;
+	    //printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
+		
+	    if (nActualTimespan < nTargetTimespan)  //is time taken for a block less than 10minutes?
+	    {
+	         //limit increase to a much lower amount than dictates to get past the pump-n-dump mining phase
+	        //due to retargets being done more often it also needs to be lowered significantly from the 4x increase
+	        if(nActualTimespan<(nTwoPercent*16)) //less than ~3.2 minute?
+	            nActualTimespan=(nTwoPercent*45); //pretend it was only 10% faster than desired
+	        else if(nActualTimespan<(nTwoPercent*32)) //less than ~6.4 minutes?
+	            nActualTimespan=(nTwoPercent*47); //pretend it was only 6% faster than desired
+	        else
+	            nActualTimespan=(nTwoPercent*49); //pretend it was only 2% faster than desired
+	
+	        //int64 nTime=nTargetTimespan-nActualTimespan;
+	        //nActualTimespan = nTargetTimespan/2;
+	    }
+	    else if (nActualTimespan > nTargetTimespan*4)   nActualTimespan = nTargetTimespan*4;
+	}
 
     // Retarget
     CBigNum bnNew;
@@ -1295,7 +1321,8 @@ bool CBlock::AcceptBlock()
         if ((nHeight ==  1000 && hash != uint256("0x0000000be0e638f75c46f83e431d50847c00330e17adbca7836e994eaf5c32d")) ||
             (nHeight ==  2000 && hash != uint256("0x0000000d5cd8ca83acc83d035879288a002b322be818c41714fd701836c7ca1")) ||
             (nHeight ==  3000 && hash != uint256("0x00000009e8d886b684685598ba4fd113fe3492dec68293030a167625879d339")) ||
-			(nHeight ==  6050 && hash != uint256("0x000000000022c879b1371c86e0486de29cce188d620b7380fcbafc4d831928ed")) 	
+			(nHeight ==  6050 && hash != uint256("0x000000000022c879b1371c86e0486de29cce188d620b7380fcbafc4d831928ed")) ||
+			(nHeight ==  19947 && hash != uint256("0000000000019b4caf53edf06c2e4359e05c0de52616b984179785188d5a0a3c")) 	
 		 )  
             return error("AcceptBlock() : rejected by checkpoint lockin at %d", nHeight);  
 			
@@ -1482,14 +1509,19 @@ FILE* AppendBlockFile(unsigned int& nFileRet)
 
 bool LoadBlockIndex(bool fAllowNew)
 {
-    if (fTestNet)
+    //Keep using bitcoin messageStart until switch-over date
+	if (GetAdjustedTime() < 1314835971) //09/01/11 00:12:51
+		pchMessageStart = { 0xf9, 0xbe, 0xb4, 0xd9 }; //bitcoin
+
+	
+	if (fTestNet)
     {
         hashGenesisBlock = uint256("0x00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008");
         bnProofOfWorkLimit = CBigNum(~uint256(0) >> 28);
         pchMessageStart[0] = 0xfa;
         pchMessageStart[1] = 0xbf;
-        pchMessageStart[2] = 0xb5;
-        pchMessageStart[3] = 0xda;
+        pchMessageStart[2] = 0xb6;
+        pchMessageStart[3] = 0xdb;
     }
 
     //
@@ -1771,7 +1803,7 @@ bool static AlreadyHave(CTxDB& txdb, const CInv& inv)
 // The message start string is designed to be unlikely to occur in normal data.
 // The characters are rarely used upper ascii, not valid as UTF-8, and produce
 // a large 4-byte int at any alignment.
-char pchMessageStart[4] = { 0xf9, 0xbe, 0xb4, 0xd9 };
+char pchMessageStart[4] = { 0xf1, 0xba, 0xb6, 0xdb }; //new ixcoin
 
 bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 {
