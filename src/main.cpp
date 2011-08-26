@@ -1510,9 +1510,12 @@ FILE* AppendBlockFile(unsigned int& nFileRet)
 bool LoadBlockIndex(bool fAllowNew)
 {
     //Keep using bitcoin messageStart until switch-over date
-	if (GetAdjustedTime() < 1314835971) //09/01/11 00:12:51
-		pchMessageStart = { 0xf9, 0xbe, 0xb4, 0xd9 }; //bitcoin
-
+	if (GetAdjustedTime() < 1314835971) { //09/01/11 00:12:51
+		pchMessageStart[0] = 0xf9;
+		pchMessageStart[1] = 0xbe;
+		pchMessageStart[2] = 0xb4;
+		pchMessageStart[3] = 0xd9;
+  }
 	
 	if (fTestNet)
     {
