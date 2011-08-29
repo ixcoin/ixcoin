@@ -674,7 +674,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast)
     // Limit adjustment step
     int64 nActualTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
     //printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
-    if (revisedIxcoin) {
+    if (!revisedIxcoin) {
 		if (nActualTimespan < nTargetTimespan/4)
 	        nActualTimespan = nTargetTimespan/4;
 	    if (nActualTimespan > nTargetTimespan*4)
@@ -1340,7 +1340,7 @@ bool CBlock::AcceptBlock()
     if (hashBestChain == hash)
         CRITICAL_BLOCK(cs_vNodes)
             BOOST_FOREACH(CNode* pnode, vNodes)
-                if (nBestHeight > (pnode->nStartingHeight != -1 ? pnode->nStartingHeight - 2000 : 134444))
+                if (nBestHeight > (pnode->nStartingHeight != -1 ? pnode->nStartingHeight - 2000 : 19947))
                     pnode->PushInventory(CInv(MSG_BLOCK, hash));
 
     return true;
