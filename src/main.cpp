@@ -661,14 +661,23 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast)
     if (pindexLast == NULL)
         return bnProofOfWorkLimit.GetCompact();
 
+    const int height = pindexLast->nHeight + 1;
+
     // Only change once per interval
-    if ((pindexLast->nHeight+1) % nInterval != 0)
+    if (height % nInterval != 0)
         return pindexLast->nBits;
+
+    // This fixes an issue where a 51% attack can change difficulty at will.
+    // Go back the full period unless it's the first retarget after genesis. Code courtesy of Art Forz
+    // Patch modified from Litecoin.
+    int blockstogoback = nInterval-1;
+    if (height >= 40000 && height != nInterval)
+        blockstogoback = nInterval;
 
     // Go back by what we want to be 14 days worth of blocks
     const CBlockIndex* pindexFirst = pindexLast;
-    for (int i = 0; pindexFirst && i < nInterval-1; i++)
-        pindexFirst = pindexFirst->pprev;
+    for (int i = 0; pindexFirst && i < blockstogoback; i++)
+       pindexFirst = pindexFirst->pprev;
     assert(pindexFirst);
 
     // Limit adjustment step
