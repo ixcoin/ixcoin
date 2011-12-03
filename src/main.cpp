@@ -1265,7 +1265,7 @@ int GetAuxPowStartBlock()
     if (fTestNet)
         return 0; // Always on testnet
     else
-        return INT_MAX; // Never on prodnet
+        return 45000; // Never on prodnet
 }
 
 int GetOurChainID()
