@@ -681,7 +681,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast)
     // Go back the full period unless it's the first retarget after genesis. Code courtesy of Art Forz
     // Patch modified from Litecoin.
     int blockstogoback = nInterval-1;
-    if (height >= 40000 && height != nInterval)
+    if (height >= 43000 && height != nInterval)
         blockstogoback = nInterval;
 
     // Go back by what we want to be 14 days worth of blocks
