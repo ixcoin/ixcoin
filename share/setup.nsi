@@ -4,7 +4,7 @@ RequestExecutionLevel highest
 
 # General Symbol Definitions
 !define REGKEY "SOFTWARE\$(^Name)"
-!define VERSION 0.3.24.2
+!define VERSION 0.3.24.3
 !define COMPANY "Ixcoin project"
 !define URL http://www.ixcoin.org/
 
@@ -39,12 +39,12 @@ Var StartMenuGroup
 !insertmacro MUI_LANGUAGE English
 
 # Installer attributes
-OutFile ixcoin-0.3.24.2-win32-setup.exe
+OutFile ixcoin-0.3.24.3-win32-setup.exe
 InstallDir $PROGRAMFILES\Ixcoin
 CRCCheck on
 XPStyle on
 ShowInstDetails show
-VIProductVersion 0.3.24.2
+VIProductVersion 0.3.24.3
 VIAddVersionKey ProductName Ixcoin
 VIAddVersionKey ProductVersion "${VERSION}"
 VIAddVersionKey CompanyName "${COMPANY}"
