@@ -7,6 +7,7 @@
 #include "db.h"
 #include "net.h"
 #include "init.h"
+#include "auxpow.h"
 #undef printf
 #include <boost/asio.hpp>
 #include <boost/iostreams/concepts.hpp>
@@ -299,6 +300,146 @@ Value getblocknumber(const Array& params, bool fHelp)
     return nBestHeight;
 }
 
+Value BlockToValue(CBlock &block)
+{
+    Object obj;
+    obj.push_back(Pair("hash", block.GetHash().ToString().c_str()));
+    obj.push_back(Pair("version", block.nVersion));
+    obj.push_back(Pair("prev_block", block.hashPrevBlock.ToString().c_str()));
+    obj.push_back(Pair("mrkl_root", block.hashMerkleRoot.ToString().c_str()));
+    obj.push_back(Pair("time", (uint64_t)block.nTime));
+    obj.push_back(Pair("bits", (uint64_t)block.nBits));
+    obj.push_back(Pair("nonce", (uint64_t)block.nNonce));
+    obj.push_back(Pair("n_tx", (int)block.vtx.size()));
+    obj.push_back(Pair("size", (int)::GetSerializeSize(block, SER_NETWORK)));
+
+    Array tx;
+    for (int i = 0; i < block.vtx.size(); i++) {
+    	Object txobj;
+
+	txobj.push_back(Pair("hash", block.vtx[i].GetHash().ToString().c_str()));
+	txobj.push_back(Pair("version", block.vtx[i].nVersion));
+	txobj.push_back(Pair("lock_time", (uint64_t)block.vtx[i].nLockTime));
+	txobj.push_back(Pair("size",
+		(int)::GetSerializeSize(block.vtx[i], SER_NETWORK)));
+
+	Array tx_vin;
+	for (int j = 0; j < block.vtx[i].vin.size(); j++) {
+	    Object vino;
+
+	    Object vino_outpt;
+
+	    vino_outpt.push_back(Pair("hash",
+	    	block.vtx[i].vin[j].prevout.hash.ToString().c_str()));
+	    vino_outpt.push_back(Pair("n", (uint64_t)block.vtx[i].vin[j].prevout.n));
+
+	    vino.push_back(Pair("prev_out", vino_outpt));
+
+	    if (block.vtx[i].vin[j].prevout.IsNull())
+	    	vino.push_back(Pair("coinbase", HexStr(
+			block.vtx[i].vin[j].scriptSig.begin(),
+			block.vtx[i].vin[j].scriptSig.end(), false).c_str()));
+	    else
+	    	vino.push_back(Pair("scriptSig", 
+			block.vtx[i].vin[j].scriptSig.ToString().c_str()));
+	    if (block.vtx[i].vin[j].nSequence != UINT_MAX)
+	    	vino.push_back(Pair("sequence", (uint64_t)block.vtx[i].vin[j].nSequence));
+
+	    tx_vin.push_back(vino);
+	}
+
+	Array tx_vout;
+	for (int j = 0; j < block.vtx[i].vout.size(); j++) {
+	    Object vouto;
+
+	    vouto.push_back(Pair("value",
+	    	(double)block.vtx[i].vout[j].nValue / (double)COIN));
+	    vouto.push_back(Pair("scriptPubKey", 
+		block.vtx[i].vout[j].scriptPubKey.ToString().c_str()));
+
+	    tx_vout.push_back(vouto);
+	}
+
+	txobj.push_back(Pair("in", tx_vin));
+	txobj.push_back(Pair("out", tx_vout));
+
+	tx.push_back(txobj);
+    }
+
+    obj.push_back(Pair("tx", tx));
+
+    Array mrkl;
+    for (int i = 0; i < block.vMerkleTree.size(); i++)
+    	mrkl.push_back(block.vMerkleTree[i].ToString().c_str());
+
+    obj.push_back(Pair("mrkl_tree", mrkl));
+
+    return obj;
+}
+
+Value getblockbycount(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "getblockbycount height\n"
+            "Dumps the block existing at specified height");
+
+    int64 height = params[0].get_int64();
+    if (height > nBestHeight)
+        throw runtime_error(
+            "getblockbycount height\n"
+            "Dumps the block existing at specified height");
+
+    string blkname = strprintf("blk%d", height);
+
+    CBlockIndex* pindex;
+    bool found = false;
+
+    for (map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.begin();
+         mi != mapBlockIndex.end(); ++mi)
+    {
+    	pindex = (*mi).second;
+	if ((pindex->nHeight == height) && (pindex->IsInMainChain())) {
+		found = true;
+		break;
+	}
+    }
+
+    if (!found)
+        throw runtime_error(
+            "getblockbycount height\n"
+            "Dumps the block existing at specified height");
+
+    CBlock block;
+    block.ReadFromDisk(pindex);
+    block.BuildMerkleTree();
+
+    return BlockToValue(block);
+}
+
+
+Value getblockbyhash(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "getblockbyhash hash\n"
+            "Dumps the block with specified hash");
+
+    uint256 hash;
+    hash.SetHex(params[0].get_str());
+
+    map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hash);
+    if (mi == mapBlockIndex.end())
+        throw JSONRPCError(-18, "hash not found");
+
+    CBlockIndex* pindex = (*mi).second;
+
+    CBlock block;
+    block.ReadFromDisk(pindex);
+    block.BuildMerkleTree();
+
+    return BlockToValue(block);
+}
 
 Value getconnectioncount(const Array& params, bool fHelp)
 {
@@ -1526,7 +1667,315 @@ Value getwork(const Array& params, bool fHelp)
     }
 }
 
+Value getworkaux(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1)
+        throw runtime_error(
+            "getworkaux <aux>\n"
+            "getworkaux '' <data>\n"
+            "getworkaux 'submit' <data>\n"
+            "getworkaux '' <data> <chain-index> <branch>*\n"
+            " get work with auxiliary data in coinbase, for multichain mining\n"
+            "<aux> is the merkle root of the auxiliary chain block hashes, concatenated with the aux chain merkle tree size and a nonce\n"
+            "<chain-index> is the aux chain index in the aux chain merkle tree\n"
+            "<branch> is the optional merkle branch of the aux chain\n"
+            "If <data> is not specified, returns formatted hash data to work on:\n"
+            "  \"midstate\" : precomputed hash state after hashing the first half of the data\n"
+            "  \"data\" : block data\n"
+            "  \"hash1\" : formatted hash buffer for second hash\n"
+            "  \"target\" : little endian hash target\n"
+            "If <data> is specified and 'submit', tries to solve the block for this (parent) chain and returns true if it was successful."
+            "If <data> is specified and empty first argument, returns the aux merkle root, with size and nonce."
+            "If <data> and <chain-index> are specified, creates an auxiliary proof of work for the chain specified and returns:\n"
+            "  \"aux\" : merkle root of auxiliary chain block hashes\n"
+            "  \"auxpow\" : aux proof of work to submit to aux chain\n"
+            );
 
+    if (vNodes.empty())
+        throw JSONRPCError(-9, "I0Coin is not connected!");
+
+    if (IsInitialBlockDownload())
+        throw JSONRPCError(-10, "I0Coin is downloading blocks...");
+
+    static map<uint256, pair<CBlock*, unsigned int> > mapNewBlock;
+    static vector<CBlock*> vNewBlock;
+    static CReserveKey reservekey(pwalletMain);
+
+    if (params.size() == 1)
+    {
+        static vector<unsigned char> vchAuxPrev;
+        vector<unsigned char> vchAux = ParseHex(params[0].get_str());
+
+        // Update block
+        static unsigned int nTransactionsUpdatedLast;
+        static CBlockIndex* pindexPrev;
+        static int64 nStart;
+        static CBlock* pblock;
+        if (pindexPrev != pindexBest ||
+            vchAux != vchAuxPrev ||
+            (nTransactionsUpdated != nTransactionsUpdatedLast && GetTime() - nStart > 60))
+        {
+            if (pindexPrev != pindexBest)
+            {
+                // Deallocate old blocks since they're obsolete now
+                mapNewBlock.clear();
+                BOOST_FOREACH(CBlock* pblock, vNewBlock)
+                    delete pblock;
+                vNewBlock.clear();
+            }
+            nTransactionsUpdatedLast = nTransactionsUpdated;
+            pindexPrev = pindexBest;
+            vchAuxPrev = vchAux;
+            nStart = GetTime();
+
+            // Create new block
+            pblock = CreateNewBlock(reservekey);
+            if (!pblock)
+                throw JSONRPCError(-7, "Out of memory");
+            vNewBlock.push_back(pblock);
+        }
+
+        // Update nTime
+        pblock->nTime = max(pindexPrev->GetMedianTimePast()+1, GetAdjustedTime());
+        pblock->nNonce = 0;
+
+        // Update nExtraNonce
+        static unsigned int nExtraNonce = 0;
+        static int64 nPrevTime = 0;
+        IncrementExtraNonceWithAux(pblock, pindexPrev, nExtraNonce, nPrevTime, vchAux);
+
+        // Save
+        mapNewBlock[pblock->hashMerkleRoot] = make_pair(pblock, nExtraNonce);
+
+        // Prebuild hash buffers
+        char pmidstate[32];
+        char pdata[128];
+        char phash1[64];
+        FormatHashBuffers(pblock, pmidstate, pdata, phash1);
+
+        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
+
+        Object result;
+        result.push_back(Pair("midstate", HexStr(BEGIN(pmidstate), END(pmidstate))));
+        result.push_back(Pair("data",     HexStr(BEGIN(pdata), END(pdata))));
+        result.push_back(Pair("hash1",    HexStr(BEGIN(phash1), END(phash1))));
+        result.push_back(Pair("target",   HexStr(BEGIN(hashTarget), END(hashTarget))));
+        return result;
+    }
+    else
+    {
+        if (params[0].get_str() != "submit" && params[0].get_str() != "")
+            throw JSONRPCError(-8, "<aux> must be the empty string or 'submit' if work is being submitted");
+        // Parse parameters
+        vector<unsigned char> vchData = ParseHex(params[1].get_str());
+        if (vchData.size() != 128)
+            throw JSONRPCError(-8, "Invalid parameter");
+        CBlock* pdata = (CBlock*)&vchData[0];
+
+        // Byte reverse
+        for (int i = 0; i < 128/4; i++)
+            ((unsigned int*)pdata)[i] = CryptoPP::ByteReverse(((unsigned int*)pdata)[i]);
+
+        // Get saved block
+        if (!mapNewBlock.count(pdata->hashMerkleRoot))
+            return false;
+        CBlock* pblock = mapNewBlock[pdata->hashMerkleRoot].first;
+        unsigned int nExtraNonce = mapNewBlock[pdata->hashMerkleRoot].second;
+
+        pblock->nTime = pdata->nTime;
+        pblock->nNonce = pdata->nNonce;
+
+        // Get the aux merkle root from the coinbase
+        CScript script = pblock->vtx[0].vin[0].scriptSig;
+        opcodetype opcode;
+        CScript::const_iterator pc = script.begin();
+        script.GetOp(pc, opcode);
+        script.GetOp(pc, opcode);
+        script.GetOp(pc, opcode);
+        if (opcode != OP_2)
+            throw runtime_error("invalid aux pow script");
+        vector<unsigned char> vchAux;
+        script.GetOp(pc, opcode, vchAux);
+
+        RemoveMergedMiningHeader(vchAux);
+
+        pblock->vtx[0].vin[0].scriptSig = MakeCoinbaseWithAux(pblock->nBits, nExtraNonce, vchAux);
+        pblock->hashMerkleRoot = pblock->BuildMerkleTree();
+
+        if (params.size() > 2)
+        {
+            // Requested aux proof of work
+            int nChainIndex = params[2].get_int();
+
+            CAuxPow pow(pblock->vtx[0]);
+
+            for (int i = 3 ; i < params.size() ; i++)
+            {
+                uint256 nHash;
+                nHash.SetHex(params[i].get_str());
+                pow.vChainMerkleBranch.push_back(nHash);
+            }
+
+            pow.SetMerkleBranch(pblock);
+            pow.nChainIndex = nChainIndex;
+            pow.parentBlock = *pblock;
+            CDataStream ss(SER_GETHASH|SER_BLOCKHEADERONLY);
+            ss << pow;
+            Object result;
+            result.push_back(Pair("auxpow", HexStr(ss.begin(), ss.end())));
+            return result;
+        }
+        else
+        {
+            if (params[0].get_str() == "submit")
+            {
+                return CheckWork(pblock, *pwalletMain, reservekey);
+            }
+            else
+            {
+                Object result;
+                result.push_back(Pair("aux", HexStr(vchAux.begin(), vchAux.end())));
+                result.push_back(Pair("hash", pblock->GetHash().GetHex()));
+                return result;
+            }
+        }
+    }
+}
+
+
+Value getauxblock(const Array& params, bool fHelp)
+{
+    if (fHelp || (params.size() != 0 && params.size() != 2))
+        throw runtime_error(
+            "getauxblock [<hash> <auxpow>]\n"
+            " create a new block"
+            "If <hash>, <auxpow> is not specified, returns a new block hash.\n"
+            "If <hash>, <auxpow> is specified, tries to solve the block based on "
+            "the aux proof of work and returns true if it was successful.");
+
+    if (vNodes.empty())
+        throw JSONRPCError(-9, "I0Coin is not connected!");
+
+    if (IsInitialBlockDownload())
+        throw JSONRPCError(-10, "I0Coin is downloading blocks...");
+
+    static map<uint256, CBlock*> mapNewBlock;
+    static vector<CBlock*> vNewBlock;
+    static CReserveKey reservekey(pwalletMain);
+
+    if (params.size() == 0)
+    {
+        // Update block
+        static unsigned int nTransactionsUpdatedLast;
+        static CBlockIndex* pindexPrev;
+        static int64 nStart;
+        static CBlock* pblock;
+        if (pindexPrev != pindexBest ||
+            (nTransactionsUpdated != nTransactionsUpdatedLast && GetTime() - nStart > 60))
+        {
+            if (pindexPrev != pindexBest)
+            {
+                // Deallocate old blocks since they're obsolete now
+                mapNewBlock.clear();
+                BOOST_FOREACH(CBlock* pblock, vNewBlock)
+                    delete pblock;
+                vNewBlock.clear();
+            }
+            nTransactionsUpdatedLast = nTransactionsUpdated;
+            pindexPrev = pindexBest;
+            nStart = GetTime();
+
+            // Create new block with nonce = 0 and extraNonce = 1
+            pblock = CreateNewBlock(reservekey);
+
+            // Update nTime
+            pblock->nTime = max(pindexPrev->GetMedianTimePast()+1, GetAdjustedTime());
+            pblock->nNonce = 0;
+
+            // Push OP_2 just in case we want versioning later
+            pblock->vtx[0].vin[0].scriptSig = CScript() << pblock->nBits << CBigNum(1) << OP_2;
+            pblock->hashMerkleRoot = pblock->BuildMerkleTree();
+
+            // Sets the version
+            pblock->SetAuxPow(new CAuxPow());
+
+            // Save
+            mapNewBlock[pblock->GetHash()] = pblock;
+
+            if (!pblock)
+                throw JSONRPCError(-7, "Out of memory");
+            vNewBlock.push_back(pblock);
+        }
+
+        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
+
+        Object result;
+        result.push_back(Pair("target",   HexStr(BEGIN(hashTarget), END(hashTarget))));
+        result.push_back(Pair("hash", pblock->GetHash().GetHex()));
+        result.push_back(Pair("chainid", pblock->GetChainID()));
+        return result;
+    }
+    else
+    {
+        uint256 hash;
+        hash.SetHex(params[0].get_str());
+        vector<unsigned char> vchAuxPow = ParseHex(params[1].get_str());
+        CDataStream ss(vchAuxPow, SER_GETHASH|SER_BLOCKHEADERONLY);
+        CAuxPow* pow = new CAuxPow();
+        ss >> *pow;
+        if (!mapNewBlock.count(hash))
+            return ::error("getauxblock() : block not found");
+
+        CBlock* pblock = mapNewBlock[hash];
+        pblock->SetAuxPow(pow);
+
+        if (!CheckWork(pblock, *pwalletMain, reservekey))
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+}
+
+Value buildmerkletree(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1)
+        throw runtime_error(
+                "buildmerkletree <obj>...\n"
+                " build a merkle tree with the given hex-encoded objects\n"
+                );
+    vector<uint256> vTree;
+    BOOST_FOREACH(const Value& obj, params)
+    {
+        uint256 nHash;
+        nHash.SetHex(obj.get_str());
+        vTree.push_back(nHash);
+    }
+
+    int j = 0;
+    for (int nSize = params.size(); nSize > 1; nSize = (nSize + 1) / 2)
+    {
+        for (int i = 0; i < nSize; i += 2)
+        {
+            int i2 = std::min(i+1, nSize-1);
+            vTree.push_back(Hash(BEGIN(vTree[j+i]),  END(vTree[j+i]),
+                        BEGIN(vTree[j+i2]), END(vTree[j+i2])));
+        }
+        j += nSize;
+    }
+
+    Array result;
+    BOOST_FOREACH(uint256& nNode, vTree)
+    {
+        result.push_back(nNode.GetHex());
+    }
+
+    return result;
+}
+ 
 
 
 
@@ -1544,7 +1993,9 @@ pair<string, rpcfn_type> pCallTable[] =
 {
     make_pair("help",                  &help),
     make_pair("stop",                  &stop),
-	make_pair("getblock",		       &getblock),
+    make_pair("getblock",		       &getblock),
+    make_pair("getblockbycount",        &getblockbycount),
+    make_pair("getblockbyhash",         &getblockbyhash),
     make_pair("getblockcount",         &getblockcount),
     make_pair("getblocknumber",        &getblocknumber),
     make_pair("getconnectioncount",    &getconnectioncount),
@@ -1579,6 +2030,9 @@ pair<string, rpcfn_type> pCallTable[] =
     make_pair("gettransaction",        &gettransaction),
     make_pair("listtransactions",      &listtransactions),
     make_pair("getwork",               &getwork),
+    make_pair("getworkaux",            &getworkaux),
+    make_pair("getauxblock",           &getauxblock),
+    make_pair("buildmerkletree",       &buildmerkletree),
     make_pair("listaccounts",          &listaccounts),
     make_pair("settxfee",              &settxfee),
 };
@@ -1606,6 +2060,8 @@ string pAllowInSafeMode[] =
     "backupwallet",
     "validateaddress",
     "getwork",
+    "getworkaux",
+    "getauxblock",
 };
 set<string> setAllowInSafeMode(pAllowInSafeMode, pAllowInSafeMode + sizeof(pAllowInSafeMode)/sizeof(pAllowInSafeMode[0]));
 
@@ -2241,7 +2697,9 @@ int CommandLineRPC(int argc, char *argv[])
         if (strMethod == "sendfrom"               && n > 3) ConvertTo<boost::int64_t>(params[3]);
         if (strMethod == "listtransactions"       && n > 1) ConvertTo<boost::int64_t>(params[1]);
         if (strMethod == "listtransactions"       && n > 2) ConvertTo<boost::int64_t>(params[2]);
+        if (strMethod == "getworkaux"             && n > 2) ConvertTo<boost::int64_t>(params[2]);
         if (strMethod == "listaccounts"           && n > 0) ConvertTo<boost::int64_t>(params[0]);
+	if (strMethod == "getblockbycount"        && n > 0) ConvertTo<boost::int64_t>(params[0]);
         if (strMethod == "sendmany"               && n > 1)
         {
             string s = params[1].get_str();
