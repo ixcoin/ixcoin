@@ -32,7 +32,7 @@ map<COutPoint, CInPoint> mapNextTx;
 map<uint256, CBlockIndex*> mapBlockIndex;
 uint256 hashGenesisBlock("0x0000000001534ef8893b025b9c1da67250285e35c9f76cae36a4904fdf72c591");//("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"); // ixcoin
 CBigNum bnProofOfWorkLimit(~uint256(0) >> 32);
-const int nTotalBlocksEstimate = 4006; // Conservative estimate of total nr of blocks on main chain //ixcoin
+const int nTotalBlocksEstimate = 36500; // Conservative estimate of total nr of blocks on main chain //ixcoin
 const int nInitialBlockThreshold = 120; // Regard blocks up until N-threshold as "initial download"
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
@@ -1330,8 +1330,9 @@ bool CBlock::AcceptBlock()
         if ((nHeight ==  1000 && hash != uint256("0x0000000be0e638f75c46f83e431d50847c00330e17adbca7836e994eaf5c32d")) ||
             (nHeight ==  2000 && hash != uint256("0x0000000d5cd8ca83acc83d035879288a002b322be818c41714fd701836c7ca1")) ||
             (nHeight ==  3000 && hash != uint256("0x00000009e8d886b684685598ba4fd113fe3492dec68293030a167625879d339")) ||
-			(nHeight ==  6050 && hash != uint256("0x000000000022c879b1371c86e0486de29cce188d620b7380fcbafc4d831928ed")) ||
-			(nHeight ==  19947 && hash != uint256("0000000000019b4caf53edf06c2e4359e05c0de52616b984179785188d5a0a3c")) 	
+            (nHeight ==  6050 && hash != uint256("0x000000000022c879b1371c86e0486de29cce188d620b7380fcbafc4d831928ed")) ||
+            (nHeight ==  19947 && hash != uint256("0000000000019b4caf53edf06c2e4359e05c0de52616b984179785188d5a0a3c"))  ||	
+            (nHeight ==  36500 && hash != uint256("00000000001de37cb05a71b63b6c48685694726169c9a5e6f1e85ef52eaf30cc"))
 		 )  
             return error("AcceptBlock() : rejected by checkpoint lockin at %d", nHeight);  
 			
@@ -1349,7 +1350,7 @@ bool CBlock::AcceptBlock()
     if (hashBestChain == hash)
         CRITICAL_BLOCK(cs_vNodes)
             BOOST_FOREACH(CNode* pnode, vNodes)
-                if (nBestHeight > (pnode->nStartingHeight != -1 ? pnode->nStartingHeight - 2000 : 19947))
+                if (nBestHeight > (pnode->nStartingHeight != -1 ? pnode->nStartingHeight - 2000 : 36500))
                     pnode->PushInventory(CInv(MSG_BLOCK, hash));
 
     return true;
